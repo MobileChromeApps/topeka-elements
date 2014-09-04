@@ -48,6 +48,52 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 (function() {
 
+/******************************************************************************/
+
+'use strict';
+
+/******************************************************************************/
+
+var GCM_SENDERID = '119557287378';
+var GCM_SENDER = GCM_SENDERID + '@gcm.googleapis.com';
+
+/******************************************************************************/
+
+function sendGcmMessage(data, callback) {
+  var message = {
+    'destinationId' : GCM_SENDER,
+    'messageId' : String(Math.random()),
+    'timeToLive' : 10,
+    'data' : data
+  };
+
+  chrome.gcm.send(message, function(msgid) {
+    if (msgid === -1) {
+      console.error(chrome.runtime.lastError);
+      //return;
+    }
+    if (typeof callback !== 'function')
+      return;
+    callback(msgid);
+  });
+}
+
+/******************************************************************************/
+
+function connectGcm(callback) {
+  chrome.gcm.register([GCM_SENDERID], function(regid) {
+    if (regid === -1) {
+      console.error(chrome.runtime.lastError);
+      return;
+    }
+    if (typeof callback === 'function') {
+      callback(regid);
+    }
+  });
+}
+
+/******************************************************************************/
+
   window.setTopekaTransitionSpeed = function(ms) {
     CoreStyle.g.transitions.duration = ms + 'ms';
     CoreStyle.g.transitions.scaleDelay = CoreStyle.g.transitions.duration;  
@@ -147,6 +193,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       } catch (e) {
         this.resetScores();
       }
+
+      connectGcm(function(regid) {
+        sendGcmMessage({'name': this.user.name, 'type': 'updateScore', 'score': pts }, console.log.bind(console));
+      });
     },
 
     computeScore: function() {
@@ -157,6 +207,17 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         }
         this.user.score = pts;
         localStorage.setItem('topeka-scores', JSON.stringify(this.allScores));
+
+        /*
+        chrome.notifications.create('topeka-score-change', {
+            type:'basic',
+            title:'Topeka',
+            iconUrl: 'icons/Icon-72.png',
+            message: 'Your Score on Topeka is now ' + pts,
+          }, function() { });
+        */
+
+        sendGcmMessage({'name': this.user.name, 'type': 'updateScore', 'score' : pts }, console.log.bind(console));
       }
     },
 
