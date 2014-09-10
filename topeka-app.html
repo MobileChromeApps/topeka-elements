@@ -194,8 +194,9 @@ function connectGcm(callback) {
         this.resetScores();
       }
 
+      var that = this;
       connectGcm(function(regid) {
-        sendGcmMessage({'name': this.user.name, 'type': 'updateScore', 'score': pts }, console.log.bind(console));
+        sendGcmMessage({'name': that.user.name, 'type': 'updateScore', 'score': pts }, console.log.bind(console));
       });
     },
 
