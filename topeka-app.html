@@ -131,7 +131,18 @@ function connectGcm(callback) {
 
       // "back" button will show categories, unless in profile screen
       window.onpopstate = function() {
-        if (this.selected !== 'profile') {
+        switch (this.selected) {
+        case 'categories':
+          // On the main page, nowhere to go back, so can exit app
+          navigator.app.exitApp();
+          break;
+        case 'profile':
+          if (!this.user) {
+            // Not logged in, so cannot leave the profile page
+            break;
+          }
+          // Fall through: when logged in, can leave, similar to other pages
+        default:
           this.showCategories();
         }
         // repopulate history state so we get the popstate event again
